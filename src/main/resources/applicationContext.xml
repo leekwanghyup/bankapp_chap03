@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	<!-- domain : 스코프가 프로토 타입에 유의 -->
+	<bean id="fixedDepositDetails"
+		class="bankapp_chap03.domain.FixedDepositDetails" scope="prototype" />
+
+	<!-- util -->
+	<bean id="databaseOperations" class="bankapp_chap03.util.DatabaseOperations"/>
+	
+	
+	<!-- dao -->
+	<bean id="daoTemplate" abstract="true">
+		<property name="databaseOperations" ref="databaseOperations"/>
+	</bean>
+
+	<bean id="personalBankingDao" parent="daoTemplate" class="bankapp_chap03.dao.PersonalBankingDaoImpl"/>
+	<bean id="fixedDepositDao" parent="daoTemplate" class="bankapp_chap03.dao.FixedDepositDaoImpl"/>
+		
+	<!-- service -->
+	<bean id="personalBankingService" class="bankapp_chap03.service.PersonalBankingServiceImpl">
+		<property name="personalBakingDao" ref="personalBankingDao"/>
+	</bean>
+	<bean id="fixedDepositService" class="bankapp_chap03.service.FixedDepositServiceImpl">
+		<property name="fixedDepositDao" ref="fixedDepositDao"/>
+	</bean>
+	
+	<!-- controller -->
+	<bean id="fixedDepositController" class="bankapp_chap03.controller.FixedDepositControllerImpl">
+		<property name="fixedDepositService" ref="fixedDepositService"/>
+	</bean>
+	<bean id="personalBankingController" class="bankapp_chap03.controller.PersonalBankingControllerImpl">
+		<constructor-arg ref="personalBankingService"/>
+	</bean>
+	
+</beans>
