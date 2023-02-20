@@ -26,9 +26,9 @@
 	<bean id="webServiceInvoker" class="bankapp_chap03.base.WebServiceInvoker"/>
 	
 	<bean id="serviceTemplate" class="bankapp_chap03.base.ServiceTemplate">
-		<constructor-arg ref="jmsMessageSender"/>
-		<constructor-arg ref="emailMessageSender"/>
-		<constructor-arg ref="webServiceInvoker"/>
+		<constructor-arg ref="jmsMessageSender" name="jms"/>
+		<constructor-arg ref="emailMessageSender" name="email"/>
+		<constructor-arg ref="webServiceInvoker" name="invoker"/>
 	</bean>
 		
 	<!-- service -->
@@ -37,6 +37,13 @@
 	</bean>
 	<bean id="fixedDepositService" parent="serviceTemplate" class="bankapp_chap03.service.FixedDepositServiceImpl">
 		<property name="fixedDepositDao" ref="fixedDepositDao"/>
+	</bean>
+	
+	<bean id="transferFundsService" class="bankapp_chap03.service.TransferFundsServiceImpl">
+		<constructor-arg value="http://someUrl.com/xyz" name="webServiceUrl" />
+		<constructor-arg value="true" type="boolean" name="active"/>
+		<constructor-arg value="5" name="numberOfRetrialAttempts"/>
+		<constructor-arg value="200" name="timeout" />
 	</bean>
 	
 	<!-- controller -->
@@ -57,4 +64,5 @@
 	<bean id="userRequestController" class="bankapp_chap03.controller.UserRequestControllerImpl">
 		<constructor-arg index="0" ref="serviceTemplate"/>
 	</bean>
+	
 </beans>

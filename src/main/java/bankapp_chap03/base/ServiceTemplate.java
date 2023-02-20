@@ -1,5 +1,7 @@
 package bankapp_chap03.base;
 
+import java.beans.ConstructorProperties;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,6 +15,7 @@ public class ServiceTemplate {
 	private EmailMessageSender emailMessageSender;
 	private WebServiceInvoker webServiceInvoker;
 	
+	@ConstructorProperties({ "jms", "email", "invoker" })
 	public ServiceTemplate(JmsMessageSender jmsMessageSender,
 			EmailMessageSender emailMessageSender,
 			WebServiceInvoker webServiceInvoker) {

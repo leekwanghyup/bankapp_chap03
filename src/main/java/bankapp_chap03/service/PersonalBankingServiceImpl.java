@@ -1,5 +1,7 @@
 package bankapp_chap03.service;
 
+import java.beans.ConstructorProperties;
+
 import bankapp_chap03.base.EmailMessageSender;
 import bankapp_chap03.base.JmsMessageSender;
 import bankapp_chap03.base.ServiceTemplate;
@@ -15,10 +17,9 @@ public class PersonalBankingServiceImpl extends ServiceTemplate implements Perso
 
 	private PersonalBakingDao personalBakingDao;
 	
-	public PersonalBankingServiceImpl(JmsMessageSender jmsMessageSender,
-			EmailMessageSender emailMessageSender,
-			WebServiceInvoker webServiceInvoker) {
-		super(jmsMessageSender, emailMessageSender, webServiceInvoker);
+	public PersonalBankingServiceImpl(JmsMessageSender jms,
+			EmailMessageSender email, WebServiceInvoker invoker) {
+		super(jms, email, invoker);
 	}
 	
 	@Override

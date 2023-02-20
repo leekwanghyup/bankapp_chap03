@@ -599,8 +599,6 @@ public class ServiceTemplate {
 	}	
 }
 
-
-```java
 @Setter @Getter
 public class FixedDepositServiceImpl extends ServiceTemplate implements FixedDepositService {
 	//...
@@ -622,6 +620,8 @@ public class PersonalBankingServiceImpl extends ServiceTemplate implements Perso
 	}
 	//...
 }
+```
+
 ```xml
 <!-- 생성자의 순서와  constructor-arg엘리먼트로 정의한 생성자의 순서가 다르다.
  타입을 모두 구분할 수 있으므로 스프링컨테이너는 올바른 순서로 ServiceTemplate을 주입한다.-->
@@ -631,3 +631,457 @@ public class PersonalBankingServiceImpl extends ServiceTemplate implements Perso
 	<constructor-arg ref="webServiceInvoker"/>
 </bean>
 ```
+
+### 상속 관계인 스프링 빈들을 생성자 인수로 사용하기 
+```java
+package bankapp_chap03.example;
+
+public class ABean {
+	public void methodA() {
+		System.out.println("methodA");
+	}
+}
+
+public class BBean extends ABean{
+	public void methodB() {
+		System.out.println("methodB");
+	}
+}
+
+public class SampleBean {
+	
+	private ABean aBean; 
+	private BBean bBean;
+
+	public SampleBean(ABean aBean, BBean bBean) {
+		this.aBean = aBean;
+		this.bBean = bBean;
+	}
+	
+	public void execute() {
+		aBean.methodA();
+		bBean.methodB();
+	}
+}
+```
+```xml
+<bean id="aBean" class="bankapp_chap03.example.ABean"/>
+<bean id="bBean" class="bankapp_chap03.example.BBean"/>
+
+<!-- 상속관계가 있을 때  타입을 지정하지않으면 같은 타입으로 보기 때문에 예외가 발생한다. -->
+<bean id="sampleBean" class="bankapp_chap03.example.SampleBean">
+	<constructor-arg ref="bBean" type="bankapp_chap03.example.BBean" />
+	<constructor-arg ref="aBean" type="bankapp_chap03.example.ABean" />
+</bean>
+```
+	둘 이상의 생성자 인수가 같은 타입이라면 constructor-arg를 어떤 생성자 인수에 적용할지 
+	지정할 수 있는 유일한 방법은 index속성을 사용하는 것 뿐이다. 
+
+
+### 표준 자바타입과 사용자 지정 타입을 생성자 인수로 사용하기 
+
+```java
+package bankapp_chap03.service;
+
+public interface TransferFundsService {
+	public void transferFunds();	
+}
+
+public class TransferFundsServiceImpl implements TransferFundsService {
+
+	private String webServiceUrl;
+	private boolean active;
+	private long timeout;
+	private int numberOfRetrialAttempts;
+	
+	public TransferFundsServiceImpl(String webServiceUrl, boolean active, 
+			long timeout, int numberOfRetrialAttempts) {
+		this.webServiceUrl = webServiceUrl;
+		this.active = active;
+		this.timeout = timeout;
+		this.numberOfRetrialAttempts = numberOfRetrialAttempts;
+	}
+
+	@Override
+	public void transferFunds() {
+		System.out.println("=================================================");
+		System.out.println("transferFunds메서드실행");
+		System.out.println("webServiceUrl : "+webServiceUrl);
+		System.out.println("active : "+active);
+		System.out.println("timeout : "+timeout);
+		System.out.println("numberOfRetrialAttempts : "+numberOfRetrialAttempts);
+		System.out.println("=================================================");
+	}
+}
+```
+	생성자의 순서에 따라 값이 설정된다.
+	webServiceUrl = http://someUrl.com/xyz
+	active = true
+	timeout = 5
+	numberOfRetrialAttempts = 200
+```xml
+<bean id="transferFundsService" class="bankapp_chap03.service.TransferFundsServiceImpl">
+	<constructor-arg value="http://someUrl.com/xyz"/>
+	<constructor-arg value="true"/>
+	<constructor-arg value="5"/>
+	<constructor-arg value="200"/>
+</bean>
+```
+	timeout=200 이고 numberOfRetrialAttempts=5을 의도했다고 가정하자.
+	타입을 지정하면 스프링컨테이너가 해당 타입에 맞게 값을 주입한다. 
+```xml
+<bean id="transferFundsService" class="bankapp_chap03.service.TransferFundsServiceImpl">
+	<constructor-arg value="http://someUrl.com/xyz" type="java.lang.String" />
+	<constructor-arg value="true" type="boolean"/>
+	<constructor-arg value="5" type="int"/>
+	<constructor-arg value="200" type="long"/>
+</bean>
+```
+
+```java
+public class TransferFundsServiceImplTest {
+
+	@Test
+	public void typMatchingTest() {
+		ClassPathXmlApplicationContext context = 
+				new ClassPathXmlApplicationContext("classpath:applicationContext.xml");
+		TransferFundsServiceImpl bean = context.getBean(TransferFundsServiceImpl.class);
+		bean.transferFunds();
+	}
+}
+```
+
+
+### 3.3.3 이름으로 생성자 인수 매치시키기 
+	name속성을 사용하면 constructor-arg 엘리먼트를 적용할 생성자 인수의 이름을 지정할 수 있다. 
+	생성자에서 @ConstructorProperties 어노테이션으로 이름을 지정한다. 
+	이 때 이름은 인수의 순서대로 지정된다. 
+```java
+public class TransferFundsServiceImpl implements TransferFundsService {
+
+	//...	
+	@ConstructorProperties(value = {
+			"webServiceUrl", "active", "timeout","numberOfRetrialAttempts"
+	})
+	public TransferFundsServiceImpl(String webServiceUrl, boolean active, 
+			long timeout, int numberOfRetrialAttempts) {
+		this.webServiceUrl = webServiceUrl;
+		this.active = active;
+		this.timeout = timeout;
+		this.numberOfRetrialAttempts = numberOfRetrialAttempts;
+	}
+	//...
+}
+```
+```xml
+<bean id="transferFundsService" class="bankapp_chap03.service.TransferFundsServiceImpl">
+	<constructor-arg value="http://someUrl.com/xyz" name="webServiceUrl" />
+	<constructor-arg value="true" type="boolean" name="active"/>
+	<constructor-arg value="5" name="numberOfRetrialAttempts"/>
+	<constructor-arg value="200" name="timeout" />
+</bean>
+```
+
+### @ConstructorProperties와 빈 정의 상속 
+	부모 빈 정의에 해당하는 클래스 생성자에 @ConstructorProperties가 있으면, 자식빈에 해당하는
+	빈 클래스 생성자에도 반드시 @ConstructorProperties가 있어야 한다. 
+	@ConstructorProperties에서 정한 이름과 자식빈클래스 생성자의 매개변수이름이 모두 일치하면 
+	@ConstructorProperties를 정의할 필요없다. 
+
+```java
+// 부모빈 
+@Getter
+@Setter
+@NoArgsConstructor
+public class ServiceTemplate {
+	private JmsMessageSender jmsMessageSender;
+	private EmailMessageSender emailMessageSender;
+	private WebServiceInvoker webServiceInvoker;
+	
+	@ConstructorProperties({ "jms", "email", "invoker" })
+	public ServiceTemplate(JmsMessageSender jmsMessageSender,
+			EmailMessageSender emailMessageSender,
+			WebServiceInvoker webServiceInvoker) {
+		this.jmsMessageSender = jmsMessageSender;
+		this.emailMessageSender = emailMessageSender;
+		this.webServiceInvoker = webServiceInvoker;
+	}	
+}
+
+// 자식빈 
+public class FixedDepositServiceImpl extends ServiceTemplate implements FixedDepositService {
+	//...
+	// 각각의 매개변수이름과 @ConstructorProperties에서 지정한 이름이 모두 일치함
+	public FixedDepositServiceImpl(JmsMessageSender jms,
+			EmailMessageSender email, WebServiceInvoker invoker) {
+		super(jms, email, invoker);
+	}
+	//...
+}
+
+public class PersonalBankingServiceImpl extends ServiceTemplate implements PersonalBankingService {
+
+	//...
+	
+	public PersonalBankingServiceImpl(JmsMessageSender jms,
+			EmailMessageSender email, WebServiceInvoker invoker) {
+		super(jms, email, invoker);
+	}
+	//...
+}
+```
+```xml
+<bean id="serviceTemplate" class="bankapp_chap03.base.ServiceTemplate">
+	<constructor-arg ref="jmsMessageSender" name="jms"/>
+	<constructor-arg ref="emailMessageSender" name="email"/>
+	<constructor-arg ref="webServiceInvoker" name="invoker"/>
+</bean>
+```
+
+<br>
+
+## 3.4 다른 타입의 빈 프로퍼티와 생성자 인수 설정하기 
+	java.util.Date, java.util.Currency, 원시 타입등의 다양한 타입을 
+	빈 프로퍼티나 생성자 인수로 넘길 수 있도록 지원해주는 PropertyEditor 구현에 대해 학습한다.
+	스프링 내장 PropertyEditor 구현을 사용을 보여주는 예부터 알아본다. 
+
+### 3.4.1 스프링 내장 프로퍼티 에디터 
+	PropertyEditor는 자바 타입을 문자열값으로 바꾸거나 역방향으로 바꾸위해 필요한 로직을 제공한다.
+```java
+package bankapp_chap03.beans;
+
+import java.util.Currency;
+import java.util.Date;
+import java.util.Properties;
+
+@Getter
+@Setter
+public class BankDetails {
+	private String bankName;
+	private byte[] bankPrimaryBusiness;
+	private char[] headOfficeAddress;
+	private char privateBank;
+	private Currency primaryCurrency;
+	private Properties branchAddresses;
+}
+```
+
+<br>
+
+	스프링 컨테이너는 각 프로퍼티에 설정된 문자열값을 등록된 자바빈의 PropertyEditor를 사용하여 
+	그 에 상응하는 자바타입으로 변환한다. 
+```xml
+<!-- peropertyEditorConfig.xml  -->
+<bean id="bankDetails" class="bankapp_chap03.beans.BankDetails">
+	<property name="bankName" value="My Personal Bank" />
+	<property name="bankPrimaryBusiness" value="Retail banking" />
+	<property name="headOfficeAddress" value="Address of head office" />
+	<property name="privateBank" value="Y" />
+	<property name="primaryCurrency" value="INR" />
+	<property name="branchAddresses">
+		<value>
+			x = Branch X's address
+			y = Branch Y's address
+			z = Branch Z's address
+		</value>
+	</property>
+</bean>
+```
+
+<br>
+
+	스프링의 모든 내장 PropertyEditor가 스프링 컨테이너에 기본값으로 등록되진 않는다. 
+	문자열값을 java.util.Date타입으로 변환하고 싶다면 CustomDateEditor를 명시적으로 등록해야한다. 
+```java
+public class MyPropertyEditorRegistrar implements PropertyEditorRegistrar{
+
+	@Override
+	public void registerCustomEditors(PropertyEditorRegistry registry) {
+		registry.registerCustomEditor(Date.class, 
+			new CustomDateEditor(new SimpleDateFormat("yyyy-MM-dd"), false));
+	}
+}
+```
+
+```xml
+<bean id="myPropertyEditorRegistrar" class="bankapp_chap03.beans.MyPropertyEditorRegistrar"/>
+	<bean class="org.springframework.beans.factory.config.CustomEditorConfigurer">
+	<property name="propertyEditorRegistrars">
+		<list>
+			<ref bean="myPropertyEditorRegistrar"/>
+		</list>
+	</property>
+</bean>
+```
+
+<br>
+
+	BankDetails에 Date타입의 필드를 추가하고 
+	xml설정에서 값을 주입해보자.
+```java
+public class BankDetails {
+	//...
+	private Date dateOfInception;
+}
+```
+```xml
+<!-- peropertyEditorConfig.xml  -->
+<bean id="bankDetails" class="bankapp_chap03.beans.BankDetails">
+	<!-- .... -->
+	<property name="dateOfInception" value="2023-12-31"/>
+</bean>
+```
+
+<br>
+
+### 3.4.2 컬렉션 타입에 값 지정하기 
+	List, Set, Map 타입의 프로퍼티나 생성자 인수를 설정하려면 property나 construcotr-arg엘리먼트의 list, map, set 하위 엘리먼트를 사용한다. 
+```java
+@ToString
+public class DataTypesExample {
+	
+	List<String> listType;
+	Properties propertiesType;
+	Properties anotherPropertiesType;
+	Map mapType;
+	Set setType;
+	
+	@ConstructorProperties({"listType","propertiesType","anotherPropertiesType","mapType","setType"})
+	public DataTypesExample(List<String> listType, Properties propertiesType, Properties anotherPropertiesType,
+			Map mapType, Set setType) {
+		this.listType = listType;
+		this.propertiesType = propertiesType;
+		this.anotherPropertiesType = anotherPropertiesType;
+		this.mapType = mapType;
+		this.setType = setType;
+	}
+}
+```
+```xml
+<!-- peropertyEditorConfig.xml -->
+<bean id="dataTypesExample" class="bankapp_chap03.beans.DataTypesExample">
+	<constructor-arg name="listType">
+		<list>
+			<value>강호동</value>
+			<value>드웨인존슨</value>
+			<value>블록레스너</value>
+			<value>마이크타이슨</value>
+		</list>
+	</constructor-arg>
+	<constructor-arg name="propertiesType">
+		<props>
+			<prop key="book">스프링5프로그래밍입문</prop>
+		</props>
+	</constructor-arg>
+	<constructor-arg name="anotherPropertiesType">
+		<value>
+			x = xxxxxxxxxxxxxxxxxx
+			y = yyyyyyyyyyyyyyyyyy
+		</value>
+	</constructor-arg>
+	<constructor-arg name="mapType">
+		<map>
+			<entry>
+				<key>
+					<value>name</value>
+				</key>
+				<value>홍길동</value>
+			</entry>
+		</map>
+	</constructor-arg>
+	<constructor-arg name="setType">
+		<set>
+			<value>임꺽정</value>
+			<value>김두한</value>
+		</set>		
+	</constructor-arg>
+</bean>
+```
+
+<br>
+
+### 컬렉션 타입에 List,Map,Set,Properties 넣기 
+	List<List>타입인 경우 list엘리먼트를 list에 내보시킬 수 있음
+	마찬가지로 List<Map>, List<Set>, List<Properties>도 가능함
+	set엘리멘트와 map엘리먼트도 동일하게 적용된다. 
+
+```java
+package bankapp_chap03.beans;
+
+@Getter
+public class CollectionTypeExample {
+	
+	List<List<String>> stringList;
+	Map<String, List<String>> mapList;
+
+	public CollectionTypeExample(List<List<String>> stringList, Map<String, List<String>> mapList) {
+		this.stringList = stringList;
+		this.mapList = mapList;
+	}
+}
+```
+```xml
+<bean id="collectionTypeExample" class="bankapp_chap03.beans.CollectionTypeExample">
+	<constructor-arg index="0">
+		<list>
+			<list>
+				<value>홍길동</value>
+				<value>임꺽정</value>
+			</list>
+			<list>
+				<value>김두한</value>
+				<value>이정재</value>
+			</list>
+			<list>
+				<value>손흥민</value>
+				<value>김민재</value>
+				<value>박지성</value>
+			</list>
+		</list>
+	</constructor-arg>
+	<constructor-arg index="1">
+		<map>
+			<entry>
+				<key>
+					<value>축구선수</value>
+				</key>
+				<list>
+					<value>손흥민</value>
+					<value>김민재</value>
+					<value>박지성</value>
+				</list>
+			</entry>
+			<entry>
+				<key>
+					<value>야인</value>
+				</key>
+				<list>
+					<value>김두한</value>
+					<value>이정재</value>
+				</list>
+			</entry>
+		</map>
+	</constructor-arg>
+</bean>
+```
+```java
+package bankapp_chap03.beans;
+
+import org.junit.Test;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+public class CollectionTypeExampleTest {
+
+	@Test
+	public void test() {
+		ClassPathXmlApplicationContext context =
+				new ClassPathXmlApplicationContext("classpath:peropertyEditorConfig.xml");
+		CollectionTypeExample bean = context.getBean(CollectionTypeExample.class);
+		System.out.println(bean.getStringList());
+		System.out.println(bean.getMapList());
+	}
+}
+```
+
+
+

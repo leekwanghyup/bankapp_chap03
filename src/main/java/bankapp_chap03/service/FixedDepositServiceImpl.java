@@ -1,5 +1,7 @@
 package bankapp_chap03.service;
 
+import java.beans.ConstructorProperties;
+
 import bankapp_chap03.base.EmailMessageSender;
 import bankapp_chap03.base.JmsMessageSender;
 import bankapp_chap03.base.ServiceTemplate;
@@ -19,10 +21,10 @@ public class FixedDepositServiceImpl extends ServiceTemplate implements FixedDep
 		System.out.println("FixedDepositServiceImpl 생성");
 	}
 	
-	public FixedDepositServiceImpl(JmsMessageSender jmsMessageSender,
-			EmailMessageSender emailMessageSender,
-			WebServiceInvoker webServiceInvoker) {
-		super(jmsMessageSender, emailMessageSender, webServiceInvoker);
+	public FixedDepositServiceImpl(JmsMessageSender jms,
+			EmailMessageSender email,
+			WebServiceInvoker invoker) {
+		super(jms, email, invoker);
 	}
 
 	@Override

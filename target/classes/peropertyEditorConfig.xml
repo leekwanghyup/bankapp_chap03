@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	<bean id="bankDetails" class="bankapp_chap03.beans.BankDetails">
+		<property name="bankName" value="My Personal Bank" />
+		<property name="bankPrimaryBusiness" value="Retail banking" />
+		<property name="headOfficeAddress" value="Address of head office" />
+		<property name="privateBank" value="Y" />
+		<property name="primaryCurrency" value="INR" />
+		<property name="branchAddresses">
+			<value>
+				x = Branch X's address
+				y = Branch Y's address
+				z = Branch Z's address
+			</value>
+		</property>
+		<property name="dateOfInception" value="2023-12-31"/>
+	</bean>
+	
+	<bean id="myPropertyEditorRegistrar" class="bankapp_chap03.beans.MyPropertyEditorRegistrar"/>
+		<bean class="org.springframework.beans.factory.config.CustomEditorConfigurer">
+		<property name="propertyEditorRegistrars">
+			<list>
+				<ref bean="myPropertyEditorRegistrar"/>
+			</list>
+		</property>
+	</bean>
+	
+	<bean id="dataTypesExample" class="bankapp_chap03.beans.DataTypesExample">
+		<constructor-arg name="listType">
+			<list>
+				<value>강호동</value>
+				<value>드웨인존슨</value>
+				<value>블록레스너</value>
+				<value>마이크타이슨</value>
+			</list>
+		</constructor-arg>
+		<constructor-arg name="propertiesType">
+			<props>
+				<prop key="book">스프링5프로그래밍입문</prop>
+			</props>
+		</constructor-arg>
+		<constructor-arg name="anotherPropertiesType">
+			<value>
+				x = xxxxxxxxxxxxxxxxxx
+				y = yyyyyyyyyyyyyyyyyy
+			</value>
+		</constructor-arg>
+		<constructor-arg name="mapType">
+			<map>
+				<entry>
+					<key>
+						<value>name</value>
+					</key>
+					<value>홍길동</value>
+				</entry>
+			</map>
+		</constructor-arg>
+		<constructor-arg name="setType">
+			<set>
+				<value>임꺽정</value>
+				<value>김두한</value>
+			</set>		
+		</constructor-arg>
+	</bean>
+	
+	<bean id="collectionTypeExample" class="bankapp_chap03.beans.CollectionTypeExample">
+		<constructor-arg index="0">
+			<list>
+				<list>
+					<value>홍길동</value>
+					<value>임꺽정</value>
+				</list>
+				<list>
+					<value>김두한</value>
+					<value>이정재</value>
+				</list>
+				<list>
+					<value>손흥민</value>
+					<value>김민재</value>
+					<value>박지성</value>
+				</list>
+			</list>
+		</constructor-arg>
+		<constructor-arg index="1">
+			<map>
+				<entry>
+					<key>
+						<value>축구선수</value>
+					</key>
+					<list>
+						<value>손흥민</value>
+						<value>김민재</value>
+						<value>박지성</value>
+					</list>
+				</entry>
+				<entry>
+					<key>
+						<value>야인</value>
+					</key>
+					<list>
+						<value>김두한</value>
+						<value>이정재</value>
+					</list>
+				</entry>
+			</map>
+		</constructor-arg>
+	</bean>
+</beans>
