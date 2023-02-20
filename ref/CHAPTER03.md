@@ -378,3 +378,256 @@ public class BankApp {
 <br>
 
 ## 3.2.2 상속할 수 있는 정보
+	프로퍼티 
+	생성자 인수
+	메서드 오버라이드 
+	초기화와 정리 메서드
+	팩토리 메서드 
+
+### 빈정의 상속의 예 - 부모 빈 정의가 추상이 아닌 경우
+```java
+package bankapp_chap03.base;
+
+public class EmailMessageSender {
+	public void info() {
+		System.out.println("EmailMessageSender 서비스");
+	}
+}
+
+public class JmsMessageSender {
+	public void info() {
+		System.out.println("JmsMessageSender 서비스");
+	}
+}
+
+public class WebServiceInvoker {
+	public void info() {
+		System.out.println("WebServiceInvoker 서비스");
+	}
+}
+
+@Setter
+@Getter
+public class ServiceTemplate {
+	private JmsMessageSender jmsMessageSender;
+	private EmailMessageSender emailMessageSender;
+	private WebServiceInvoker webServiceInvoker;	
+}
+```
+	
+```java
+// 서비스 구현체를 다음과같이 ServiceTemplate 상속하도록 수정한다.
+@Setter @Getter
+public class FixedDepositServiceImpl extends ServiceTemplate implements FixedDepositService {/*..*/}
+
+@Setter @Getter
+public class PersonalBankingServiceImpl extends ServiceTemplate implements PersonalBankingService {/*..*/}
+```
+
+	jmsMessageSender, emailMessageSender, webServiceInvoker 스프링빈으로 정의
+	serviceTemplate 스프링빈 정의 위에 등록한 빈을 세터DI 
+	personalBankingService, fixedDepositService 빈의 부모빈으로 serviceTemplate 지정
+```xml
+	<!-- base -->
+	<bean id="jmsMessageSender" class="bankapp_chap03.base.JmsMessageSender"/>
+	<bean id="emailMessageSender" class="bankapp_chap03.base.EmailMessageSender"/>
+	<bean id="webServiceInvoker" class="bankapp_chap03.base.WebServiceInvoker"/>
+	
+	<bean id="serviceTemplate" class="bankapp_chap03.base.ServiceTemplate">
+		<property name="jmsMessageSender" ref="jmsMessageSender"/>
+		<property name="emailMessageSender" ref="emailMessageSender"/>
+		<property name="webServiceInvoker" ref="webServiceInvoker"/>
+	</bean>
+
+	<!-- service -->
+	<bean id="personalBankingService" parent="serviceTemplate" 
+			class="bankapp_chap03.service.PersonalBankingServiceImpl">
+		<property name="personalBakingDao" ref="personalBankingDao"/>
+	</bean>
+	<bean id="fixedDepositService" parent="serviceTemplate" 
+			class="bankapp_chap03.service.FixedDepositServiceImpl">
+		<property name="fixedDepositDao" ref="fixedDepositDao"/>
+	</bean>	
+```
+
+```java
+public class BankApp2 {
+	
+	public static void main(String[] args) {
+		ApplicationContext context = 
+				new ClassPathXmlApplicationContext("classpath:applicationContext.xml");
+		
+		PersonalBankingServiceImpl bean = context.getBean(PersonalBankingServiceImpl.class);
+		bean.getEmailMessageSender().info();
+		bean.getJmsMessageSender().info();
+		bean.getWebServiceInvoker().info();
+		
+		FixedDepositServiceImpl bean2 = context.getBean(FixedDepositServiceImpl.class);
+		bean2.getEmailMessageSender().info();
+		bean2.getJmsMessageSender().info();
+		bean2.getWebServiceInvoker().info();
+	}
+}
+```
+
+### 빈정의 상속의 예 - 패토리 메서드 설정 상속하기 
+```java
+package bankapp_chap03.controller;
+
+public class ControllerFactory {
+	
+	// 팩토리 메소드 : 자신에게 전달된 controllerName 인수값에 따라 
+	// fixedDepositController, personalBankingController 생성
+	public Object getController(String controllerName) {
+		Object controller = null;
+		if("fixedDepositController".equalsIgnoreCase(controllerName)) {
+			controller = new FixedDepositControllerImpl();
+		}
+		if("personalBankingController".equalsIgnoreCase(controllerName)) {
+			controller = new PersonalBankingControllerImpl();
+		}
+		return controller; 
+	}
+}
+
+@Getter @Setter
+public class FixedDepositControllerImpl implements FixedDepositController {}
+
+@Setter
+public class PersonalBankingControllerImpl implements PersonalBankingController {}
+```
+
+	controllerTemplate빈 정의가 추상이므로 getController팩토리 메서드 설정을 사용할지 여부를 결정하는 것은
+	자식빈  정의인 fixedDepositController 또는 personalBankingController 이다.
+	constructor-arg 엘리먼트를 사용해 인수를 인스턴스 팩토리 메서드에 전달하였다. 
+	BankApp 클래스의 메인메소드를 실행하여 확인한다. 
+```xml
+	<!-- controller -->
+<bean id="controllerFactory" class="bankapp_chap03.controller.ControllerFactory"/>
+
+<bean id="controllerTemplate" factory-bean="controllerFactory"
+	factory-method="getController" abstract="true"/>
+
+<bean id="fixedDepositController" parent="controllerTemplate">
+	<constructor-arg index="0" value="fixedDepositController"/>
+	<property name="fixedDepositService" ref="fixedDepositService"/>
+</bean> 
+<bean id="personalBankingController" parent="controllerTemplate">
+	<constructor-arg index="0" value="personalBankingController"/>
+	<property name="personalBankingService" ref="personalBankingService"/>
+</bean>
+```
+
+<br>
+
+## 3.3 생성자 인수 매치하기 
+
+### 3.3.1 constructor-arg 엘리먼트를 사용해 빈 참조나 단순한 값 전달하기 
+```java
+// Request
+package bankapp_chap03.domain;
+public class Request {}
+
+// UserRequestController
+package bankapp_chap03.controller;
+import bankapp_chap03.domain.Request;
+
+public interface UserRequestController {
+	void submitRequest(Request request);
+}
+
+// UserRequestControllerImpl
+public class UserRequestControllerImpl implements UserRequestController {
+	
+	private ServiceTemplate serviceTemplate;
+
+	public UserRequestControllerImpl(ServiceTemplate serviceTemplate) {
+		this.serviceTemplate = serviceTemplate;
+	}
+
+	@Override
+	public void submitRequest(Request request) {
+		System.out.println("UserRequestControllerImpl:submitRequest 실행");
+		serviceTemplate.getJmsMessageSender().info();
+	}
+}
+```
+
+```xml
+<!-- constructor-arg엘리먼트의 ref 속성을 사용해 ServiceTemplate 인스턴스의 참조를 
+UserRequestControllerImpl의 생성자에 넘긴다. -->
+<bean id="userRequestController" class="bankapp_chap03.controller.UserRequestControllerImpl">
+	<constructor-arg index="0" ref="serviceTemplate"/>
+</bean>
+```
+
+```java
+package bankapp_chap03.controller;
+public class UserRequestControllerImplTest {
+
+	@Test
+	public void test() {
+		ClassPathXmlApplicationContext context = 
+				new ClassPathXmlApplicationContext("classpath:applicationContext.xml");
+		UserRequestController bean = context.getBean(UserRequestController.class);
+		bean.submitRequest(new Request());
+	}
+}
+```
+
+<br>
+
+### 3.3.2 타입으로 생성자 인수 매치시키기
+	constructor-arg 엘리먼트의 index 속성을 지정하지 않으면
+	constructor-arg 엘리먼트에 의해 참조되는 타입을 빈 클래스 생서자의 인수 타입과 매치시켜 
+	어떤 생성자 인수를 호출할지 결정한다. 
+```java
+@Getter
+@Setter
+@NoArgsConstructor
+public class ServiceTemplate {
+	private JmsMessageSender jmsMessageSender;
+	private EmailMessageSender emailMessageSender;
+	private WebServiceInvoker webServiceInvoker;
+	
+	public ServiceTemplate(JmsMessageSender jmsMessageSender,
+			EmailMessageSender emailMessageSender,
+			WebServiceInvoker webServiceInvoker) {
+		this.jmsMessageSender = jmsMessageSender;
+		this.emailMessageSender = emailMessageSender;
+		this.webServiceInvoker = webServiceInvoker;
+	}	
+}
+
+
+```java
+@Setter @Getter
+public class FixedDepositServiceImpl extends ServiceTemplate implements FixedDepositService {
+	//...
+	public FixedDepositServiceImpl(JmsMessageSender jmsMessageSender,
+			EmailMessageSender emailMessageSender,
+			WebServiceInvoker webServiceInvoker) {
+		super(jmsMessageSender, emailMessageSender, webServiceInvoker);
+	}
+	//...
+}
+
+@Setter @Getter
+public class PersonalBankingServiceImpl extends ServiceTemplate implements PersonalBankingService {
+	//...
+	public PersonalBankingServiceImpl(JmsMessageSender jmsMessageSender,
+			EmailMessageSender emailMessageSender,
+			WebServiceInvoker webServiceInvoker) {
+		super(jmsMessageSender, emailMessageSender, webServiceInvoker);
+	}
+	//...
+}
+```xml
+<!-- 생성자의 순서와  constructor-arg엘리먼트로 정의한 생성자의 순서가 다르다.
+ 타입을 모두 구분할 수 있으므로 스프링컨테이너는 올바른 순서로 ServiceTemplate을 주입한다.-->
+<bean id="serviceTemplate" class="bankapp_chap03.base.ServiceTemplate">
+	<constructor-arg ref="emailMessageSender"/>
+	<constructor-arg ref="jmsMessageSender"/>
+	<constructor-arg ref="webServiceInvoker"/>
+</bean>
+```

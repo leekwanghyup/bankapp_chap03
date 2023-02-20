@@ -5,8 +5,8 @@ import bankapp_chap03.service.FixedDepositService;
 import lombok.Getter;
 import lombok.Setter;
 
-@Setter
 @Getter
+@Setter
 public class FixedDepositControllerImpl implements FixedDepositController {
 
 	private FixedDepositService fixedDepositService;
@@ -24,4 +24,5 @@ public class FixedDepositControllerImpl implements FixedDepositController {
 	public boolean submit(FixedDepositDetails fixedDepositDetails) {
 		return fixedDepositService.createFixedDeposit(fixedDepositDetails);
 	}
+
 }

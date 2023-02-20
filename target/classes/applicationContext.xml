@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+	 http://www.springframework.org/schema/beans/spring-beans.xsd">
 
 	<!-- domain : 스코프가 프로토 타입에 유의 -->
 	<bean id="fixedDepositDetails"
@@ -19,20 +20,41 @@
 	<bean id="personalBankingDao" parent="daoTemplate" class="bankapp_chap03.dao.PersonalBankingDaoImpl"/>
 	<bean id="fixedDepositDao" parent="daoTemplate" class="bankapp_chap03.dao.FixedDepositDaoImpl"/>
 		
+	<!-- base -->
+	<bean id="jmsMessageSender" class="bankapp_chap03.base.JmsMessageSender"/>
+	<bean id="emailMessageSender" class="bankapp_chap03.base.EmailMessageSender"/>
+	<bean id="webServiceInvoker" class="bankapp_chap03.base.WebServiceInvoker"/>
+	
+	<bean id="serviceTemplate" class="bankapp_chap03.base.ServiceTemplate">
+		<constructor-arg ref="jmsMessageSender"/>
+		<constructor-arg ref="emailMessageSender"/>
+		<constructor-arg ref="webServiceInvoker"/>
+	</bean>
+		
 	<!-- service -->
-	<bean id="personalBankingService" class="bankapp_chap03.service.PersonalBankingServiceImpl">
+	<bean id="personalBankingService" parent="serviceTemplate" class="bankapp_chap03.service.PersonalBankingServiceImpl">
 		<property name="personalBakingDao" ref="personalBankingDao"/>
 	</bean>
-	<bean id="fixedDepositService" class="bankapp_chap03.service.FixedDepositServiceImpl">
+	<bean id="fixedDepositService" parent="serviceTemplate" class="bankapp_chap03.service.FixedDepositServiceImpl">
 		<property name="fixedDepositDao" ref="fixedDepositDao"/>
 	</bean>
 	
 	<!-- controller -->
-	<bean id="fixedDepositController" class="bankapp_chap03.controller.FixedDepositControllerImpl">
+	<bean id="controllerFactory" class="bankapp_chap03.controller.ControllerFactory"/>
+	
+	<bean id="controllerTemplate" factory-bean="controllerFactory"
+		factory-method="getController" abstract="true"/>
+	
+	<bean id="fixedDepositController" parent="controllerTemplate">
+		<constructor-arg index="0" value="fixedDepositController"/>
 		<property name="fixedDepositService" ref="fixedDepositService"/>
-	</bean>
-	<bean id="personalBankingController" class="bankapp_chap03.controller.PersonalBankingControllerImpl">
-		<constructor-arg ref="personalBankingService"/>
+	</bean> 
+	<bean id="personalBankingController" parent="controllerTemplate">
+		<constructor-arg index="0" value="personalBankingController"/>
+		<property name="personalBankingService" ref="personalBankingService"/>
 	</bean>
 	
+	<bean id="userRequestController" class="bankapp_chap03.controller.UserRequestControllerImpl">
+		<constructor-arg index="0" ref="serviceTemplate"/>
+	</bean>
 </beans>

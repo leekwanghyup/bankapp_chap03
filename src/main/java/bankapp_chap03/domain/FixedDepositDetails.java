@@ -1,7 +1,5 @@
 package bankapp_chap03.domain;
 
-import java.util.Date;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
