@@ -1,4 +1,4 @@
-package bankapp_chap03.namespace;
+package bankapp_chap03.namespace.p_namespace;
 
 import lombok.Getter;
 import lombok.Setter;

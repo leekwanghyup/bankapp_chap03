@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-4.3.xsd">
+
+	<!-- 참조값 -->
+	<bean id="aaa" p:name="임꺽정" class="bankapp_chap03.util_schema.Box"/>
+	<bean id="bbb" p:name="홍길동" class="bankapp_chap03.util_schema.Box"/>
+	<bean id="ccc" p:name="김두한" class="bankapp_chap03.util_schema.Box"/>
+	<util:list id="boxList" list-class="java.util.ArrayList">
+		<ref bean="aaa"/>
+		<ref bean="bbb"/>
+		<ref bean="ccc"/>
+	</util:list>
+	
+	<!-- 기본값 및 문자열 -->	
+	<util:list id="nameList" list-class="java.util.ArrayList">
+		<value>김두한</value>
+		<value>이화룡</value>
+		<value>구마적</value>
+	</util:list>
+	
+	<bean id="simpleBean" class="bankapp_chap03.util_schema.SimpleBean"
+		p:boxList-ref="boxList"
+		p:nameList-ref="nameList"/>
+		
+	<!-- key,value가 문자열 및 기본값일 때  -->
+	<util:map id="scoreMap" map-class="java.util.HashMap">
+		<entry key="홍길동" value="100"/>
+		<entry key="임꺽정" value="95"/>
+		<entry key="김두한" value="77"/>
+	</util:map>	
+	
+	<!-- key, value가 참조값일 때  -->
+	<bean id="hong" class="bankapp_chap03.util_schema.Box" p:name="홍길동"/>
+	<bean id="lim" class="bankapp_chap03.util_schema.Box" p:name="임꺽정"/>
+	<bean id="kim" class="bankapp_chap03.util_schema.Box" p:name="김두한"/>
+	
+	<bean id="score1" class="bankapp_chap03.util_schema.ScoreBox" p:score="111" />
+	<bean id="score2" class="bankapp_chap03.util_schema.ScoreBox" p:score="95" />
+	<bean id="score3" class="bankapp_chap03.util_schema.ScoreBox" p:score="57" />
+	
+	<util:map id="scoreBoxMap" map-class="java.util.HashMap">
+		<entry key-ref="hong" value-ref="score1"/>
+		<entry key-ref="lim" value-ref="score2"/>
+		<entry key-ref="kim" value-ref="score3"/>
+	</util:map>
+	<bean id="demoMapBean" class="bankapp_chap03.util_schema.DemoMapBean"
+		p:scoreMap-ref="scoreMap"
+		p:scoreBoxMap-ref="scoreBoxMap"/>
+		
+	<!-- 빈에서 참조  -->
+	<util:properties id="propList">
+		<prop key="동천동">칠록3지구지점</prop>
+		<prop key="검단동">검단공단지점</prop>
+		<prop key="복현동">복현네거리지점</prop>
+	</util:properties>
+	
+	<!-- properties 파일 불러오기 
+		location 속성 : 
+			- 프로퍼티파일이 존재하는 경로, 쉼표로 구분하여 여러개를 사용할 수 있음
+			- classpath 또는 파일시스템 절대 경로 사용 
+	-->
+	<util:properties id="dbinfo" location="classpath:dbinfo.properties"/>			
+	<bean id="branchAddress" class="bankapp_chap03.util_schema.BranchAddress" 
+		p:nameProp-ref="propList"
+		p:dbInfo-ref="dbinfo"/>
+</beans>

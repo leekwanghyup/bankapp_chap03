@@ -1381,8 +1381,10 @@ public class MyPropertyEditorRegistrar implements PropertyEditorRegistrar{
 <br>
 
 ## 3.7 이름공간으로 빈정의를 간결하게 만들기 
+
+### 3.7.1 p-이름공간
 ```java
-package bankapp_chap03.namespace;
+package bankapp_chap03.namespace.p_namespace;
 
 @Getter
 @Setter
@@ -1405,7 +1407,7 @@ public class BankDetailsTest {
 	public static void main(String[] args) {
 		FileSystemXmlApplicationContext ctx = 
 				new FileSystemXmlApplicationContext(
-				"src/main/java/bankapp_chap03/namespace/namespaceContext.xml");
+				"src/main/java/bankapp_chap03/namespace/p_namespace/namespaceContext.xml");
 		BankDetails bean = ctx.getBean(BankDetails.class);
 		System.out.println(bean);
 	}
@@ -1415,13 +1417,254 @@ public class BankDetailsTest {
 	p:bankName="대구은행" 빈 값 설정
 	p:address-ref="address" 빈 참조 
 ```xml
-<bean id="address" class="bankapp_chap03.namespace.Address"
+<!-- p_namespaceContext.xml -->
+<bean id="address" class="bankapp_chap03.namespace.p_namespace.Address"
 	p:code="대구광역시" 
 	p:zip="405124"/>
 	
-<bean id="bankDetails" class="bankapp_chap03.namespace.BankDetails"
+<bean id="bankDetails" class="bankapp_chap03.namespace.p_namespace.BankDetails"
 	p:bankName="대구은행"
 	p:address-ref="address"/>
 ```
 
+<br>
 
+### 3.7.2 c-이름공간
+
+### 생성자 인수에 이름을 지정하는 경우 
+```java
+package bankapp_chap03.namespace.c_namespace;
+
+@ToString
+public class Address {
+	String code; 
+	String zip;
+	
+	@ConstructorProperties({"code","zip"})
+	public Address(String code, String zip) {
+		this.code = code;
+		this.zip = zip;
+	}
+}
+
+@ToString
+public class BankDetails {
+	String bankName; 
+	Address Address;
+	
+	@ConstructorProperties({"bankName", "address"})
+	public BankDetails(String bankName, Address address) {
+		this.bankName = bankName;
+		Address = address;
+	}
+}
+
+// XML 설정 이후 실행
+public class BankDetailsTest {
+	public static void main(String[] args) {
+		FileSystemXmlApplicationContext ctx = 
+				new FileSystemXmlApplicationContext(
+				"src/main/java/bankapp_chap03/namespace/c_namespace/c_namespaceContext.xml");
+		BankDetails bean = ctx.getBean(BankDetails.class);
+		System.out.println(bean);
+	}
+}
+```
+```xml
+<bean id="address" class="bankapp_chap03.namespace.c_namespace.Address"
+	c:code="서울특별시" 
+	c:zip="505113"/>
+	
+<bean id="bankDetails" class="bankapp_chap03.namespace.c_namespace.BankDetails"
+	c:bankName="국민은행"
+	c:address-ref="address"/>
+```
+
+### 생성자 인수의 인덱스를 이용하는 경우 
+
+```xml
+<!-- Address, BankDetails 생성자에 붙은 @ConstructorProperties 어노테이션 삭제 -->
+<bean id="address" class="bankapp_chap03.namespace.c_namespace.Address"
+	c:_0="부산광역시" 
+	c:_1="780545"/>
+	
+<bean id="bankDetails" class="bankapp_chap03.namespace.c_namespace.BankDetails"
+	c:_0="부산은행"
+	c:_1-ref="address"/>
+```
+
+<br>
+
+## 3.8 util 스키마
+
+### 3.8.1 list
+```java
+package bankapp_chap03.util_schema;
+
+@Setter @Getter @ToString
+public class Box {
+	String name;
+}
+@ToString @Setter
+public class SimpleBean {
+	private List<Box> boxList; 
+	private List<String> nameList;
+}
+
+// XML 설정 후 실행
+public class SimpleMain {
+	public static void main(String[] args) {
+		String path = "src/main/java/bankapp_chap03/util_schema/";
+		ApplicationContext ctx 
+			= new FileSystemXmlApplicationContext(path+"schemaContext.xml");
+		SimpleBean bean = ctx.getBean(SimpleBean.class);
+		System.out.println(bean);
+	}
+}
+```
+```xml
+<!-- schemaContext.xml -->
+<!-- 참조값 -->
+<bean id="aaa" p:name="임꺽정" class="bankapp_chap03.util_schema.Box"/>
+<bean id="bbb" p:name="홍길동" class="bankapp_chap03.util_schema.Box"/>
+<bean id="ccc" p:name="김두한" class="bankapp_chap03.util_schema.Box"/>
+<util:list id="boxList" list-class="java.util.ArrayList">
+	<ref bean="aaa"/>
+	<ref bean="bbb"/>
+	<ref bean="ccc"/>
+</util:list>
+
+<!-- 기본값 및 문자열 -->	
+<util:list id="nameList" list-class="java.util.ArrayList">
+	<value>김두한</value>
+	<value>이화룡</value>
+	<value>구마적</value>
+</util:list>
+
+<bean id="simpleBean" class="bankapp_chap03.util_schema.SimpleBean"
+	p:boxList-ref="boxList"
+	p:nameList-ref="nameList"/>
+```
+
+### 3.8.2 map
+```java
+package bankapp_chap03.util_schema;
+
+@Setter @Getter @ToString
+public class Box {
+	String name;
+}
+
+@Setter @ToString
+public class ScoreBox {
+	int score; 
+}
+
+@Setter @Getter @ToString
+public class DemoMapBean {
+	private Map<String, Integer> scoreMap;
+	private Map<Box, ScoreBox> scoreBoxMap;
+}
+
+// XML설정 후 실행 
+public class DemoMapBeanMain {
+	public static void main(String[] args) {
+		String path = "src/main/java/bankapp_chap03/util_schema/";
+		ApplicationContext ctx 
+			= new FileSystemXmlApplicationContext(path+"schemaContext.xml");
+		DemoMapBean mapBean = ctx.getBean(DemoMapBean.class);
+		System.out.println(mapBean);
+	}
+}
+```
+```xml
+<!-- schemaContext.xml -->
+
+<!-- key,value가 문자열 및 기본값일 때  -->
+<util:map id="scoreMap" map-class="java.util.HashMap">
+	<entry key="홍길동" value="100"/>
+	<entry key="임꺽정" value="95"/>
+	<entry key="김두한" value="77"/>
+</util:map>	
+
+<!-- key, value가 참조값일 때  -->
+<bean id="hong" class="bankapp_chap03.util_schema.Box" p:name="홍길동"/>
+<bean id="lim" class="bankapp_chap03.util_schema.Box" p:name="임꺽정"/>
+<bean id="kim" class="bankapp_chap03.util_schema.Box" p:name="김두한"/>
+
+<bean id="score1" class="bankapp_chap03.util_schema.ScoreBox" p:score="111" />
+<bean id="score2" class="bankapp_chap03.util_schema.ScoreBox" p:score="95" />
+<bean id="score3" class="bankapp_chap03.util_schema.ScoreBox" p:score="57" />
+
+<util:map id="scoreBoxMap" map-class="java.util.HashMap">
+	<entry key-ref="hong" value-ref="score1"/>
+	<entry key-ref="lim" value-ref="score2"/>
+	<entry key-ref="kim" value-ref="score3"/>
+</util:map>
+<bean id="demoMapBean" class="bankapp_chap03.util_schema.DemoMapBean"
+	p:scoreMap-ref="scoreMap"
+	p:scoreBoxMap-ref="scoreBoxMap"/>
+```
+
+### 3.8.3 set : list와 동일 생략 
+	
+### 3.8.4 properties
+```java
+package bankapp_chap03.util_schema;
+
+@ToString
+@Setter
+@Getter
+public class BranchAddress {
+	Properties nameProp; 
+	Properties dbInfo;
+}
+
+
+// 모든 설정 파일 설정 후 실행 
+public class BranchAddressMain {
+	
+	public static void main(String[] args) {
+		String path = "src/main/java/bankapp_chap03/util_schema/";
+		ApplicationContext ctx 
+			= new FileSystemXmlApplicationContext(path+"schemaContext.xml");
+		BranchAddress bean = ctx.getBean(BranchAddress.class);
+		System.out.println(bean);
+	}
+}
+```
+```properties
+#클래스패스 위치 : dbinfo.properties
+url=oracleUrl
+driver=oracleDriver
+username=leekwanghyup
+```
+```xml
+<!-- 빈에서 참조  -->
+<util:properties id="propList">
+	<prop key="동천동">칠록3지구지점</prop>
+	<prop key="검단동">검단공단지점</prop>
+	<prop key="복현동">복현네거리지점</prop>
+</util:properties>
+
+<!-- properties 파일 불러오기 
+	location 속성 : 
+		- 프로퍼티파일이 존재하는 경로, 쉼표로 구분하여 여러개를 사용할 수 있음
+		- classpath 또는 파일시스템 절대 경로 사용 
+-->
+<util:properties id="dbinfo" location="classpath:dbinfo.properties"/>			
+<bean id="branchAddress" class="bankapp_chap03.util_schema.BranchAddress" 
+	p:nameProp-ref="propList"
+	p:dbInfo-ref="dbinfo"/>
+```
+```java
+
+```
+
+### 3.8.5 contstant
+
+### 3.8.6 property-path
+
+## 3.9 FactoryBean 인터페이스
+
+## 3.10 빈 설정 모듈화하기

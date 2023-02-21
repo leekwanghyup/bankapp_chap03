@@ -13,7 +13,7 @@
 		<config>src/main/resources/collectionRefContext.xml</config>
 		<config>src/main/resources/arrayContext.xml</config>
 		<config>src/main/resources/collectionTypeContext.xml</config>
-		<config>src/main/java/bankapp_chap03/namespace/namespaceContext.xml</config>
+		<config>src/main/java/bankapp_chap03/util_schema/schemaContext.xml</config>
 	</configs>
 	<autoconfigs>
 	</autoconfigs>

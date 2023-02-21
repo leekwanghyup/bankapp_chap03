@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:c="http://www.springframework.org/schema/c"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	<bean id="address" class="bankapp_chap03.namespace.c_namespace.Address"
+		c:_0="부산광역시" 
+		c:_1="780545"/>
+		
+	<bean id="bankDetails" class="bankapp_chap03.namespace.c_namespace.BankDetails"
+		c:_0="부산은행"
+		c:_1-ref="address"/>
+</beans>
