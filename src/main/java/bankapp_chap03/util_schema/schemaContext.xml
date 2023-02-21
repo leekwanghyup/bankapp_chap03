@@ -68,4 +68,26 @@
 	<bean id="branchAddress" class="bankapp_chap03.util_schema.BranchAddress" 
 		p:nameProp-ref="propList"
 		p:dbInfo-ref="dbinfo"/>
+		
+		
+	<!-- 3.8.5 constant -->
+	<util:constant id="driverClass" static-field="bankapp_chap03.util_schema.constant.DbInfo.DRIVER_CLASS_NAME"/>
+	<util:constant id="jdbcUrl" static-field="bankapp_chap03.util_schema.constant.DbInfo.URL"/>
+	<bean class="bankapp_chap03.util_schema.constant.DemoConstant" 
+		p:driverClass-ref="driverClass"
+		p:jdbcUrl-ref="jdbcUrl"/>
+	
+	<!-- 3.8.6 property-path -->
+	<bean id="nameBox" class="bankapp_chap03.util_schema.path.NameBox" 
+		p:name="홍길동"/>
+	
+	<!-- path속성 : 빈이름.프로퍼티이름 
+		nameBox빈의 name프로퍼티에서 설정한 값을 빈으로 등록함.
+		game빈에서 이 값을 참조하고 있다.
+	-->
+	<util:property-path id="userName" path="nameBox.name"/>
+	
+	<bean id="game" class="bankapp_chap03.util_schema.path.Game" 
+		p:userName-ref="userName"/>
+		
 </beans>

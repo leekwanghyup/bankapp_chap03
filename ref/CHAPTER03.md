@@ -1661,10 +1661,92 @@ username=leekwanghyup
 
 ```
 
+<br>
+
 ### 3.8.5 contstant
+```java
+package bankapp_chap03.util_schema.constant;
+public class DbInfo {
+	public static String DRIVER_CLASS_NAME = "oracle.jdbc.driver.OracleDriver";
+	public static String URL="jdbc:oracle:thin:@localhost:1521:xe";
+}
+
+@Setter
+@ToString
+public class DemoConstant {
+	private String driverClass; 
+	private String jdbcUrl;
+}
+
+// 메인메소드
+public class DemoConstantMain {
+	public static void main(String[] args) {
+		String path = "src/main/java/bankapp_chap03/util_schema/";
+		ApplicationContext ctx 
+			= new FileSystemXmlApplicationContext(path+"schemaContext.xml");
+		DemoConstant bean = ctx.getBean(DemoConstant.class);
+		System.out.println(bean);
+	}
+}
+```
+	public static필드를 스프링빈으로 지정한다. 
+	다른 빈에서 이 값을 참조할 수 있다. 
+```xml
+<!-- schemaContext.xml -->
+<!-- 3.8.5 constant -->
+<util:constant id="driverClass" static-field="bankapp_chap03.util_schema.constant.DbInfo.DRIVER_CLASS_NAME"/>
+<util:constant id="jdbcUrl" static-field="bankapp_chap03.util_schema.constant.DbInfo.URL"/>
+<bean class="bankapp_chap03.util_schema.constant.DemoConstant" 
+	p:driverClass-ref="driverClass"
+	p:jdbcUrl-ref="jdbcUrl"/>
+```
 
 ### 3.8.6 property-path
+```java
+package bankapp_chap03.util_schema.path;
+
+@Setter
+@Getter // 빈의 프로퍼티를 노출하려면 반드시 게터가 필요하다.
+public class NameBox {
+	private String name; 
+}
+
+@ToString
+@Setter
+public class Game {
+	public String userName;
+}
+
+// 메인클래스
+public class GameMain {
+	public static void main(String[] args) {
+		String path = "src/main/java/bankapp_chap03/util_schema/";
+		ApplicationContext ctx 
+			= new FileSystemXmlApplicationContext(path+"schemaContext.xml");
+		Game bean = ctx.getBean(Game.class);
+		System.out.println(bean);
+	}
+}
+```
+```xml
+<!-- 3.8.6 property-path -->
+<bean id="nameBox" class="bankapp_chap03.util_schema.path.NameBox" 
+	p:name="홍길동"/>
+
+<!-- path속성 : 빈이름.프로퍼티이름 
+	nameBox빈의 name프로퍼티에서 설정한 값을 빈으로 등록함.
+	game빈에서 이 값을 참조하고 있다.
+-->
+<util:property-path id="userName" path="nameBox.name"/>
+
+<bean id="game" class="bankapp_chap03.util_schema.path.Game" 
+	p:userName-ref="userName"/>
+```
 
 ## 3.9 FactoryBean 인터페이스
+	빈 인스턴스 생성을 담당하는 클래슨느 스프링FactoryBean 인터페이스로 구현
+	어떤 타입의 빈을 만들지 결정하고 복잡한 검사 수행, 복잡한 빈 초기화 로직을 실행할 때 유용함
+
+### 3.9.1 데이터베이스에 이벤트 저장 
 
 ## 3.10 빈 설정 모듈화하기
