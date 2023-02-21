@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+	
+	<bean id="demoA" class="bankapp_chap03.collection_ref.DemoA"/>
+	<bean id="demoB" class="bankapp_chap03.collection_ref.DemoB"/>
+	<bean id="demoVO" class="bankapp_chap03.collection_ref.DemoVO">
+		<property name="demoList">
+			<list>
+				<ref bean="demoA"/>
+				<ref bean="demoB"/>
+			</list>
+		</property>
+		<property name="demoMap">
+			<map>
+				<entry>
+					<key><ref bean="demoA"/></key>
+					<ref bean="demoB"/>
+				</entry>
+			</map>
+		</property>
+	</bean>
+	
+	<bean id="sampleBean" class="bankapp_chap03.collection_ref.SampleBean">
+		<property name="beanList">
+			<map value-type="java.util.HashMap">
+				<entry>
+					<key><idref bean="demoA"/></key>
+					<ref bean="demoA" />
+				</entry>
+			</map>
+		</property>
+	</bean>
+	
+	<bean id="nullVO" class="bankapp_chap03.collection_ref.NullVO">
+		<property name="stringList">
+			<list>
+				<value>홍길동</value>
+				<null/>
+				<null/>
+			</list>
+		</property>
+		<property name="mapList">
+			<map>
+				<entry>
+					<key>
+						<value>홍</value>
+					</key>
+					<value>길동</value>
+				</entry>
+				<entry>
+					<key>
+						<null/>
+					</key>
+					<null/>
+				</entry>
+			</map>
+		</property>
+	</bean>
+	
+</beans>

@@ -10,6 +10,10 @@
 		<config>src/main/resources/applicationContext.xml</config>
 		<config>src/main/resources/exampleContext.xml</config>
 		<config>src/main/resources/peropertyEditorConfig.xml</config>
+		<config>src/main/resources/collectionRefContext.xml</config>
+		<config>src/main/resources/arrayContext.xml</config>
+		<config>src/main/resources/collectionTypeContext.xml</config>
+		<config>src/main/java/bankapp_chap03/namespace/namespaceContext.xml</config>
 	</configs>
 	<autoconfigs>
 	</autoconfigs>

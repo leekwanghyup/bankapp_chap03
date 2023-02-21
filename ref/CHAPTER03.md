@@ -1083,5 +1083,345 @@ public class CollectionTypeExampleTest {
 }
 ```
 
+<br>
+
+### 컬렉션 타입에 빈 참조 추가 
+```java
+package bankapp_chap03.collection_ref;
+
+public interface DemoBean {}
+public class DemoA implements DemoBean{}
+public class DemoB implements DemoBean{}
+
+@Setter
+@ToString
+public class DemoVO {
+	private List<DemoBean> demoList;
+	private Map<DemoBean, DemoBean> demoMap;
+}
+```
+```xml
+<!-- collectionRefContext.xml -->
+<bean id="demoA" class="bankapp_chap03.collection_ref.DemoA"/>
+<bean id="demoB" class="bankapp_chap03.collection_ref.DemoB"/>
+<bean id="demoVO" class="bankapp_chap03.collection_ref.DemoVO">
+	<property name="demoList">
+		<list>
+			<ref bean="demoA"/>
+			<ref bean="demoB"/>
+		</list>
+	</property>
+	<property name="demoMap">
+		<map>
+			<entry>
+				<key><ref bean="demoA"/></key>
+				<ref bean="demoB"/>
+			</entry>
+		</map>
+	</property>
+</bean>
+```
+```java
+public class DemoVOTest {
+
+	@Test
+	public void test() {
+		ClassPathXmlApplicationContext context =
+				new ClassPathXmlApplicationContext("classpath:collectionRefContext.xml");
+		DemoVO bean = context.getBean(DemoVO.class,"demoVO");
+		System.out.println(bean);
+	}
+}
+```
+
+<br>
+
+### 컬렉션 타입에 빈 이름 추가 
+	빈 이름 문자열로 설정할 때 value 엘리먼트를 사용할 수도 있겠지만 
+	idref엘리먼트를 사용하면 애플리케이션이 실행될 때 스프링 컨테이너가 
+	이름이 존재하는지 검증해 준다.
+```java
+package bankapp_chap03.collection_ref;
+
+@ToString
+@Setter
+public class SampleBean {
+	Map<String, DemoBean> beanList;
+}
+```
+```xml
+<!-- collectionRefContext.xml -->
+<bean id="sampleBean" class="bankapp_chap03.collection_ref.SampleBean">
+	<property name="beanList">
+		<map>
+			<entry>
+				<key><idref bean="demoA"/></key>
+				<ref bean="demoA" />
+			</entry>
+		</map>
+	</property>
+</bean>
+```
+
+<br>
+
+### 컬렉션 타입에 null 값 추가
+
+```java
+@Setter
+@ToString
+public class NullVO {
+	List<String> stringList;
+	Map<String,String> mapList;
+}
+
+```
+```xml
+<bean id="nullVO" class="bankapp_chap03.collection_ref.NullVO">
+	<property name="stringList">
+		<list>
+			<value>홍길동</value>
+			<null/>
+			<null/>
+		</list>
+	</property>
+	<property name="mapList">
+		<map>
+			<entry>
+				<key>
+					<value>홍</value>
+				</key>
+				<value>길동</value>
+			</entry>
+			<entry>
+				<key>
+					<null/>
+				</key>
+				<null/>
+			</entry>
+		</map>
+	</property>
+</bean>
+```
+```java
+public class NullVOTest {
+	@Test
+	public void test() {
+		ClassPathXmlApplicationContext context =
+				new ClassPathXmlApplicationContext("classpath:collectionRefContext.xml");
+		NullVO bean = context.getBean(NullVO.class);
+		System.out.println(bean);
+	}
+}
+```
+
+<br>
+
+### 3.4.3 배열에 값 지정하기
+	array 엘리먼트안에 list, set, map 엘리먼트를 사용할 수 있고 그 반대도 가능함
+	2차원 이상의배열을 만들 때는 array엘리먼트를 중첩하여 사용한다. 
+```java
+@Setter
+@Getter
+public class MyArray1 {
+	int[] numbersProp; 
+}
+```
+```xml
+<!-- arrayContext.xml -->
+<bean id="myArray1" class="bankapp_chap03.array.MyArray1">
+	<property name="numbersProp">
+		<array>
+			<value>1</value>
+			<value>2</value>
+			<value>3</value>
+		</array>
+		<!-- array 대신 list 엘리먼트를 사용할 수 있음-->
+	</property>
+</bean>
+```
+```java
+public class MyArray1Test {
+
+	@Test
+	public void test() {
+		ClassPathXmlApplicationContext context =
+				new ClassPathXmlApplicationContext("classpath:arrayContext.xml");
+		MyArray1 bean = context.getBean(MyArray1.class);
+		System.out.println(Arrays.toString(bean.getNumbersProp()));
+	}
+}
+```
+
+<br>
+
+### 3.4.4 list, set, map 엘리먼트의 디폴트 구현 
+	list : java.util.ArrayList
+	set : java.util.LinkedHashSet
+	map : java.util.LinkedHashSet
+	다음과 같이 디폴트 구현이 아니 다른 구현을 사용할 수 있다. 
+```xml
+<map value-type="java.util.HashMap">
+	<entry>
+		<key><idref bean="demoA"/></key>
+		<ref bean="demoA" />
+	</entry>
+</map>
+```	
+
+<br>
+
+## 3.5 내장 프로퍼티 에디터 
+	CustomCollectionEditor
+	CustomMapEditor
+	CustomDateEditor
+
+### 3.5.1 CustomCollectionEditor
+	CustomCollectionEditor는 원본 컬렉션 타입을 대상 컬렉션 타입으로 변환할 때 쓰인다.
+	Set, SortedSet, List 타입에 대해 등록되어있다. 
+
+```java
+@Setter
+@ToString
+public class CollectionTypeDemo {
+	private Set<String> setType; 
+	private List<String> listType;
+}
+```
+
+	listType프로퍼티를 set엘리먼트로 지정
+		CustomCollectionEditor가 listType 프로퍼티를 설정하기 전에 LinkedHashSet을 ArrayList타입으로 변환한다.
+	setType프로퍼티를 list엘리먼트로 지정 
+		CustomCollectionEditor가 setType 프로퍼티를 설정하기 전에 ArrayList을 LinkedHashSet타입으로 변환한다.
+	
+```xml
+<!-- collectionTypeContext.xml -->
+<bean id="collectionTypeDemo" class="bankapp_chap03.custom_collection_editor.CollectionTypeDemo">
+	<property name="listType">
+		<set>
+			<value>Sample01</value>
+			<value>Sample02</value>
+			<value>Sample03</value>
+		</set>
+	</property>
+	<property name="setType">
+		<list>
+			<value>Demo01</value>
+			<value>Demo02</value>
+			<value>Demo03</value>
+		</list>
+	</property>
+</bean>
+```
+```java
+public class CollectionTypeDemoTest {
+	
+	@Test
+	public void test() {
+		ClassPathXmlApplicationContext context =new ClassPathXmlApplicationContext("collectionTypeContext.xml");
+		CollectionTypeDemo bean = context.getBean(CollectionTypeDemo.class);
+		System.out.println(bean);
+		context.close();
+	}
+}
+```
+### 3.5.3 CustomDateEditor
+	java.util.Date타입을 문자열로 형식화하여 만듬
+	날짜/시간을 표현하는 문자열을 파싱하여 java.util.Date타입의 객체를 만듬
+
+## 3.6 스프링 컨테이너에 프로퍼티 에디터 등록
+	BeanWrapperImpl 클래스 : 몇 가지 내장 프로퍼티 에디터를 스프링 컨테이너에 등록함
+	기본적으로 등록되는 프로퍼티 에디터 
+		CustomCollectionEditor, CustomMapEditor, 
+		CurrencyEditor, ByteArrayPropertyEditor, CharacterEditor
+	CustomDateEditor는 등록되지 않는다. 
+
+	CustomEditorConfigurer : 프로퍼티 에디터를 등록할 수 있다. 
+		스프링 컨테이너는 이 빈을 자동으로 감지한다. 
+	
+	프로퍼티 에디터를 스프링 컨테이너에 등록하는 순서
+		1. PropertyEditorRegistrar 인터페이스의 구현체 생성 
+		2. PropertyEditorRegistrar 구현을 스프링빈으로 등록
+		3. CustomEditorConfigurer 빈 등록 후 PropertyEditorRegistrar구현에 대한 참조 지정
+
+
+### 3.6.1 PropertyEditorRegistrar 구현
+```java
+package bankapp_chap03.beans;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import org.springframework.beans.PropertyEditorRegistrar;
+import org.springframework.beans.PropertyEditorRegistry;
+import org.springframework.beans.propertyeditors.CustomDateEditor;
+
+public class MyPropertyEditorRegistrar implements PropertyEditorRegistrar{
+
+	@Override
+	public void registerCustomEditors(PropertyEditorRegistry registry) {
+		registry.registerCustomEditor(Date.class, 
+			new CustomDateEditor(new SimpleDateFormat("yyyy-MM-dd"), false));
+	}
+}
+```
+
+### 3.6.2 CustomEditorConfigurer 클래스 설정
+```xml
+<!-- peropertyEditorConfig.xml -->
+<bean id="myPropertyEditorRegistrar" class="bankapp_chap03.beans.MyPropertyEditorRegistrar"/>
+	<bean class="org.springframework.beans.factory.config.CustomEditorConfigurer">
+	<property name="propertyEditorRegistrars">
+		<list>
+			<ref bean="myPropertyEditorRegistrar"/>
+		</list>
+	</property>
+</bean>
+```
+
+<br>
+
+## 3.7 이름공간으로 빈정의를 간결하게 만들기 
+```java
+package bankapp_chap03.namespace;
+
+@Getter
+@Setter
+@ToString
+public class Address {
+	String code; 
+	String zip;
+}
+
+@Getter
+@Setter
+@ToString
+public class BankDetails {
+	String bankName; 
+	Address Address;  
+}
+
+// XML 설정 이후 실행 
+public class BankDetailsTest {
+	public static void main(String[] args) {
+		FileSystemXmlApplicationContext ctx = 
+				new FileSystemXmlApplicationContext(
+				"src/main/java/bankapp_chap03/namespace/namespaceContext.xml");
+		BankDetails bean = ctx.getBean(BankDetails.class);
+		System.out.println(bean);
+	}
+}
+```
+
+	p:bankName="대구은행" 빈 값 설정
+	p:address-ref="address" 빈 참조 
+```xml
+<bean id="address" class="bankapp_chap03.namespace.Address"
+	p:code="대구광역시" 
+	p:zip="405124"/>
+	
+<bean id="bankDetails" class="bankapp_chap03.namespace.BankDetails"
+	p:bankName="대구은행"
+	p:address-ref="address"/>
+```
 
 

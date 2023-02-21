@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+	
+	<bean id="collectionTypeDemo" class="bankapp_chap03.custom_collection_editor.CollectionTypeDemo">
+		<property name="listType">
+			<set>
+				<value>Sample01</value>
+				<value>Sample02</value>
+				<value>Sample03</value>
+			</set>
+		</property>
+		<property name="setType">
+			<list>
+				<value>Demo01</value>
+				<value>Demo02</value>
+				<value>Demo03</value>
+			</list>
+		</property>
+	</bean>
+
+</beans>

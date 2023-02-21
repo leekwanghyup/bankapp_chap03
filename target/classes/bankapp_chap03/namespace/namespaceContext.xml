@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	<bean id="address" class="bankapp_chap03.namespace.Address"
+		p:code="대구광역시" 
+		p:zip="405124"/>
+		
+	<bean id="bankDetails" class="bankapp_chap03.namespace.BankDetails"
+		p:bankName="대구은행"
+		p:address-ref="address"/>
+	
+</beans>
