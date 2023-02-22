@@ -70,5 +70,4 @@ public class EventSenderFactoryBean implements FactoryBean<EventSender>{
 	public boolean isSingleton() {
 		return true;
 	}
-
 }

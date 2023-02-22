@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	<bean id="eventSenderFactory" class="bankapp_chap03.factorybean.event.EventSenderFactoryBean">
+		<property name="databasePropertiesFile" value="prop/database.properties"/>
+		<property name="messagingPropertiesFile" value="prop/messaing.properties"/>
+	</bean>
+	
+	<bean id="fixedDepositService" class="bankapp_chap03.factorybean.service.FixedDepositService">
+		<property name="eventSenderFactoryBean" ref="&amp;eventSenderFactory"/>
+	</bean>
+</beans>

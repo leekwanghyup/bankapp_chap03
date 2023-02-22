@@ -1749,4 +1749,232 @@ public class GameMain {
 
 ### 3.9.1 데이터베이스에 이벤트 저장 
 
+### 3.9.2 FactoryBean 예제 
+```java
+// 이벤트
+package bankapp_chap03.factorybean.event;
+
+public interface Event {
+	String getEventType(); // 이벤트 타입
+	void setEventData(Map<String, Object> eventData); // 이벤트 설정
+	Map<String, Object> getEventData(); // 설정된 이벤트 얻기
+}
+
+public interface EventSender {
+	void sendEvent(Event event);
+	void info();
+}
+
+@AllArgsConstructor
+public class DatabaseEventSender implements EventSender {
+
+	private Properties databaseProperties;
+	
+	@Override
+	public void sendEvent(Event event) {
+		System.out.println(event.getEventType());
+		Map<String,Object> eventData = event.getEventData();
+		System.out.println(eventData);
+		System.out.println("DatabaseEventSender 이벤트 데이터베이스 저장");
+	}
+
+	@Override
+	public void info() {
+		System.out.println("DatabaseEventSender");
+	}
+}
+
+@AllArgsConstructor
+public class MessagingEventSender implements EventSender{
+
+	private Properties messagingProperties;
+	
+	@Override
+	public void sendEvent(Event event) {
+		System.out.println("MessagingEventSender 이벤트 데이터베이스 저장");
+	}
+
+	@Override
+	public void info() {
+		System.out.println("MessagingEventSender");
+	}
+}
+
+@AllArgsConstructor
+public class WebServiceEventSender implements EventSender {
+
+	private Properties WebServiceProperties;
+	
+	@Override
+	public void sendEvent(Event event) {
+		System.out.println("WebServiceEventSender 이벤트 데이터베이스 저장");
+	}
+
+	@Override
+	public void info() {
+		System.out.println("WebServiceEventSender");
+	}
+}
+
+@Setter
+public class EventSenderFactoryBean implements FactoryBean<EventSender>{
+
+	// properties파일경로
+	private String databasePropertiesFile; 
+	private String webServicePropertiesFile;
+	private String messagingPropertiesFile;
+	
+	
+	// FactoryBean 구현이 관리하는 객체 반환
+	@Override
+	public EventSender getObject() throws Exception {
+		EventSender eventSender = null;
+		Properties properties = new Properties();
+		
+		ClassPathResource databaseProperties = null;
+		ClassPathResource webServiceProperties = null;
+		ClassPathResource messagingProperties = null;
+		
+		// 파일의 경로를 나타내는 필드에 값이 있으면 ClassPathResource객체 생성
+		if (databasePropertiesFile != null) {
+			databaseProperties = new ClassPathResource(databasePropertiesFile);
+		}
+		if (webServicePropertiesFile != null) {
+			webServiceProperties = new ClassPathResource(
+					webServicePropertiesFile);
+		}
+		if (messagingPropertiesFile != null) {
+			messagingProperties = new ClassPathResource(messagingPropertiesFile);
+		}
+		
+		// 해당 경로에 파일이 존재하는지 검사하고 
+		// 파일이 존재한다면 읽은 후 Properties객체에 저장하여 해당 객체생성
+		if(databaseProperties!=null && databaseProperties.exists()) {
+			InputStream inStream = databaseProperties.getInputStream();
+			properties.load(inStream);
+			eventSender = new DatabaseEventSender(properties);
+		} else if (webServiceProperties != null && webServiceProperties.exists()) {
+			InputStream inStream = webServiceProperties.getInputStream();
+			properties.load(inStream);
+			eventSender = new WebServiceEventSender(properties);
+		} else if (messagingProperties != null && messagingProperties.exists()) {
+			InputStream inStream = messagingProperties.getInputStream();
+			properties.load(inStream);
+			eventSender = new MessagingEventSender(properties);
+		}
+		return eventSender;
+	}
+
+	// FactoryBean 구현이 관리하는 객체 타입 반환
+	@Override
+	public Class<?> getObjectType() {
+		return EventSender.class;
+	}
+	
+	// 싱글턴 여부 
+	// true : getObject가 반환하는 객체를 캐시에 저장하고 그 이후의 요청은 캐시에 저장한 객체를 반환
+	// false : 객체를 요청할 때 마다 매번 getObject 새로운 객체를 반환한다.
+	@Override
+	public boolean isSingleton() {
+		return true;
+	}
+}
+
+// 서비스 
+package bankapp_chap03.factorybean.service;
+
+@Setter
+@Getter
+public class FixedDepositService {
+	private EventSender eventSender;
+	
+	public void createFixedDeposit() {
+		 
+		FixedDepositCreatedEvent event = new FixedDepositCreatedEvent();
+		Map<String, Object> eventData = new HashMap<String, Object>();
+		eventData.put("amount", "100000");
+		event.setEventData(eventData);
+		eventSender.sendEvent(event);
+	}
+}
+```
+```properties
+# database.properties
+greeting=Hello....
+```
+
+```xml
+<!-- factoryBeanContext.xml -->
+<bean id="eventSenderFactory" class="bankapp_chap03.factorybean.event.EventSenderFactoryBean">
+	<property name="databasePropertiesFile" value="prop/database.properties"/>
+	<property name="messagingPropertiesFile" value="prop/messaing.properties"/>
+</bean>
+
+<bean id="fixedDepositService" class="bankapp_chap03.factorybean.service.FixedDepositService">
+	<property name="eventSender" ref="eventSenderFactory"/>
+</bean>
+```
+
+<br>
+
+### 3.9.3 FactoryBean 인스턴스에 접근하기 
+```java
+@Setter
+@Getter
+public class FixedDepositService {
+	
+	// 팩토리빈 주입
+	private EventSenderFactoryBean eventSenderFactoryBean;
+	
+	public void createFixedDeposit() throws Exception {
+		//...		 
+
+		// 팩토리 빈에서 객체를 얻어냄
+		EventSender eventSender = eventSenderFactoryBean.getObject();
+		eventSender.sendEvent(event);
+	}
+}
+
+// 메인클래스
+public class FactoryBeanMain {
+	public static void main(String[] args) throws Exception {
+		ClassPathXmlApplicationContext context 
+			= new ClassPathXmlApplicationContext("factoryBeanContext.xml");
+		FixedDepositService bean = context.getBean(FixedDepositService.class);
+		bean.createFixedDeposit();
+		System.out.println("=====================");
+		
+		// 타입으로 얻을 때는 동일한다. 이름으로 얻을 때는 빈 id앞에 &를 붙인다. 
+		EventSenderFactoryBean eventSenderFactoryBean = (EventSenderFactoryBean) context.getBean("&eventSenderFactory");
+		EventSender eventSender = eventSenderFactoryBean.getObject();
+		eventSender.info();
+	}
+}
+```
+```xml
+<!-- factoryBeanContext.xml -->
+<bean id="eventSenderFactory" class="bankapp_chap03.factorybean.event.EventSenderFactoryBean">
+	<property name="databasePropertiesFile" value="prop/database.properties"/>
+	<property name="messagingPropertiesFile" value="prop/messaing.properties"/>
+</bean>
+
+<!-- 참조하려는 빈id에 &amp;을 붙인다.-->
+<bean id="fixedDepositService" class="bankapp_chap03.factorybean.service.FixedDepositService">
+	<property name="eventSenderFactoryBean" ref="&amp;eventSenderFactory"/>
+</bean>
+```
+
 ## 3.10 빈 설정 모듈화하기
+	bankapp-dao.xml : dao빈이 정의 되어있다. 
+	bankapp-service.xml : service빈이 정의되어있다. 
+	applicationContext.xml 설정이 위 두 설정파일을 포함하려면 
+	import 엘리먼트를 사용하면 된다. 
+```xml
+<!-- applicationContext.xml-->
+<import resource="bankapp-dao.xml">
+<import resource="bankapp-service.xml">
+
+<bean id="controller" class="... FixedDepositController">
+	<property name="fixedDepositService" ref="service">
+</bean>
+```

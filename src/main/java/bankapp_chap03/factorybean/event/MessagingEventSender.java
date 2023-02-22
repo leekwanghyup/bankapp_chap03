@@ -10,8 +10,12 @@ public class MessagingEventSender implements EventSender{
 	private Properties messagingProperties;
 	
 	@Override
-	public void snedEvent(Event event) {
-		System.out.println("DatabaseEventSender 이벤트 데이터베이스 저장");
+	public void sendEvent(Event event) {
+		System.out.println("MessagingEventSender 이벤트 데이터베이스 저장");
 	}
 
+	@Override
+	public void info() {
+		System.out.println("MessagingEventSender");
+	}
 }
